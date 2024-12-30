@@ -1,25 +1,51 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import { getTasks, createTask, updateTask, deleteTask } from './api';
+import TaskForm from './components/TaskForm';
+import TaskList from './components/TaskList';
+const App = () => {
+    const [tasks, setTasks] = useState([]);
+    const [editTask, setEditTask] = useState(null);
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+    // Fetch tasks on component mount
+    useEffect(() => {
+        loadTasks();
+    }, []);
+
+    const loadTasks = async () => {
+        const response = await getTasks();
+        setTasks(response.data);
+    };
+
+    const handleCreateTask = async (task) => {
+        const response = await createTask(task);
+        setTasks([...tasks, response.data]);
+    };
+
+    const handleUpdateTask = async (task) => {
+        const response = await updateTask(task.id, task);
+        setTasks(tasks.map((t) => (t.id === task.id ? response.data : t)));
+        setEditTask(null);
+    };
+
+    const handleDeleteTask = async (id) => {
+        await deleteTask(id);
+        setTasks(tasks.filter((t) => t.id !== id));
+    };
+
+    return (
+        <div>
+            <h1>Task Manager</h1>
+            <TaskForm
+                onSubmit={editTask ? handleUpdateTask : handleCreateTask}
+                editTask={editTask}
+            />
+            <TaskList
+                tasks={tasks}
+                onEdit={setEditTask}
+                onDelete={handleDeleteTask}
+            />
+        </div>
+    );
+};
 
 export default App;
